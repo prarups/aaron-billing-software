@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+
+{% block title %}POS - Aaron Billing{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-item {
+        border-bottom: 1px solid #edf2f7;
+        padding-bottom: 0.6rem;
+        margin-bottom: 0.6rem;
+    }
+    .cart-item-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .cart-item-price {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--bs-primary);
+    }
+    .scanner-container {
+        border-radius: 1rem;
+        overflow: hidden;
+        background: #000;
+        margin-bottom: 1rem;
+        display: none;
+    }
+    #reader {
+        width: 100%;
+    }
+    .qty-control {
+        width: 100px;
+    }
+    .btn-xs {
+        padding: 0.15rem 0.45rem;
+        font-size: 0.75rem;
+        border-radius: 0.5rem;
+    }
+    /* Mobile optimization */
+    @media (max-width: 991.98px) {
+        .pos-container {
+            flex-direction: row;
+        }
+        .cart-card .card-header, .cart-card .card-footer {
+            padding: 0.4rem !important;
+        }
+        .cart-item {
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .cart-item-name, .cart-item-price {
+            font-size: 0.7rem !important;
+        }
+        .qty-control {
+            width: 70px;
+        }
+        .pos-item-card {
+            padding: 0.25rem !important;
+        }
+        .pos-item-card .fw-bold {
+            font-size: 0.65rem !important;
+        }
+        .pos-item-card .text-primary {
+            font-size: 0.65rem !important;
+        }
+        .cart-card h5, .cart-card h6 { font-size: 0.8rem !important; }
+        .cart-card .badge { font-size: 0.6rem !important; }
+        .qty-control .btn, .qty-control input { padding: 0.1rem !important; font-size: 0.7rem !important; }
+    }
+    .pos-item-card {
+        transition: transform 0.1s;
+        cursor: pointer;
+    }
+    .pos-item-card:active {
+        transform: scale(0.95);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-1 pos-container">
+    <!-- POS Actions (Left Side) -->
+    <div class="col-7">
+        <div class="card p-3 mb-4 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0 text-primary"><i class="bi bi-search me-2"></i>Add Products</h5>
+                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" id="toggle-scanner">
+                    <i class="bi bi-camera me-1"></i> Scan
+                </button>
+            </div>
+            
+            <!-- Scanner -->
+            <div class="scanner-container" id="scanner-wrapper">
+                <div id="reader"></div>
+            </div>
+
+            <!-- Manual Search -->
+            <div class="row g-2">
+                <div class="col-8">
+                    <input type="text" id="barcode-input" class="form-control rounded-pill border-0 shadow-sm bg-light" placeholder="Barcode...">
+                </div>
+                <div class="col-4">
+                    <button class="btn btn-primary w-100 rounded-pill shadow-sm" id="add-by-barcode">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product List / Quick Pick -->
+        <div class="card p-3 border-0 shadow-sm mb-4">
+            <h6 class="text-muted small fw-bold mb-3">Quick Select</h6>
+            <div class="row g-2">
+                {% for item in inventory %}
+                <div class="col-4 col-sm-3 col-md-2">
+                    <div class="pos-item-card card p-1 text-center h-100 border-light bg-light shadow-none" onclick="addToCart('{{ item.product.id }}', '{{ item.product.name }}', '{{ item.product.price }}')">
+                        <div class="fw-bold x-small text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</div>
+                        <div class="text-primary fw-bold x-small">₹{{ item.product.price }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-4 text-muted">No products found.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart (Right Side) -->
+    <div class="col-5 col-lg-4">
+        <div class="card h-100 d-flex flex-column shadow-sm border-0 cart-card">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold m-0 text-primary"><i class="bi bi-cart3 me-2"></i>Current Bill</h5>
+                <span class="badge bg-primary rounded-pill h6 mb-0" id="cart-count">0 items</span>
+            </div>
+            <div class="card-body flex-grow-1 overflow-auto p-3" id="cart-container" style="max-height: 500px;">
+                <div class="text-center py-5" id="empty-cart-msg">
+                    <i class="bi bi-cart-x fs-1 text-muted opacity-25 d-block mb-3"></i>
+                    <p class="text-muted">Empty Cart</p>
+                </div>
+            </div>
+            <div class="card-footer bg-white p-3 border-0 shadow-lg cart-footer-sticky" style="border-radius: 0 0 1rem 1rem;">
+                <div class="mb-2">
+                    <input type="text" id="customer-name" class="form-control form-control-sm mb-2 rounded-pill bg-light border-0" placeholder="Name">
+                    <input type="text" id="customer-phone" class="form-control form-control-sm rounded-pill bg-light border-0" placeholder="WhatsApp">
+                </div>
+                <div class="mb-2">
+                    <div class="btn-group w-100 btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="payment_method" id="pay-cash" value="cash" checked autocomplete="off">
+                        <label class="btn btn-outline-success rounded-start-pill" for="pay-cash">Cash</label>
+                        
+                        <input type="radio" class="btn-check" name="payment_method" id="pay-online" value="online" autocomplete="off">
+                        <label class="btn btn-outline-primary rounded-end-pill" for="pay-online">Online</label>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+                    <h6 class="fw-bold mb-0">Total:</h6>
+                    <h5 class="fw-bold text-primary mb-0" id="cart-total">₹0.00</h5>
+                </div>
+                <button class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow-sm" id="checkout-btn" disabled>
+                    <i class="bi bi-check2-circle me-1"></i> PROCESS
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    let cart = [];
+    const html5QrCode = new Html5Qrcode("reader");
+    let isScannerOpen = false;
+
+    // Cart Management
+    function addToCart(id, name, price) {
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.quantity++;
+        } else {
+            cart.push({ id, name, price: parseFloat(price), quantity: 1 });
+        }
+        renderCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function updateQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.quantity += delta;
+            if (item.quantity <= 0) removeFromCart(id);
+            else renderCart();
+        }
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cart-container');
+        const totalEl = document.getElementById('cart-total');
+        const countEl = document.getElementById('cart-count');
+        const checkoutBtn = document.getElementById('checkout-btn');
+
+        if (cart.length === 0) {
+            container.innerHTML = `<div class="text-center py-5" id="empty-cart-msg">
+                                    <i class="bi bi-cart-x fs-1 text-muted opacity-25 d-block mb-3"></i>
+                                    <p class="text-muted">Empty Cart</p>
+                                   </div>`;
+            totalEl.innerText = "₹0.00";
+            countEl.innerText = "0 items";
+            checkoutBtn.disabled = true;
+            return;
+        }
+
+        checkoutBtn.disabled = false;
+        container.innerHTML = '';
+        let total = 0;
+        let count = 0;
+
+        cart.forEach(item => {
+            const subtotal = item.price * item.quantity;
+            total += subtotal;
+            count += item.quantity;
+            const itemHtml = `
+                <div class="cart-item">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="cart-item-name">${item.name}</span>
+                        <span class="cart-item-price">₹${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="input-group qty-control">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="updateQty('${item.id}', -1)">-</button>
+                            <input type="text" class="form-control form-control-sm text-center border-secondary-subtle py-0" value="${item.quantity}" readonly>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="updateQty('${item.id}', 1)">+</button>
+                        </div>
+                        <button class="btn btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', itemHtml);
+        });
+
+        totalEl.innerText = `₹${total.toFixed(2)}`;
+        countEl.innerText = `${count} items`;
+    }
+
+    // Barcode Search
+    document.getElementById('add-by-barcode').addEventListener('click', () => {
+        const barcode = document.getElementById('barcode-input').value;
+        if (!barcode) return;
+        
+        fetch(`/billing/get-product/?barcode=${barcode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) alert(data.error);
+                else {
+                    addToCart(data.id.toString(), data.name, data.price);
+                    document.getElementById('barcode-input').value = '';
+                }
+            });
+    });
+
+    // Scanner
+    document.getElementById('toggle-scanner').addEventListener('click', () => {
+        const wrapper = document.getElementById('scanner-wrapper');
+        if (isScannerOpen) {
+            html5QrCode.stop().then(() => {
+                wrapper.style.display = 'none';
+                isScannerOpen = false;
+            });
+        } else {
+            wrapper.style.display = 'block';
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => {
+                    // Success
+                    fetch(`/billing/get-product/?barcode=${decodedText}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.error) {
+                                addToCart(data.id.toString(), data.name, data.price);
+                                // Play success sound if needed
+                            }
+                        });
+                },
+                (errorMessage) => { /* ignore */ }
+            ).then(() => {
+                isScannerOpen = true;
+            }).catch(err => alert("Camera permission denied."));
+        }
+    });
+
+    // Checkout
+    document.getElementById('checkout-btn').addEventListener('click', () => {
+        const customerName = document.getElementById('customer-name').value;
+        const customerPhone = document.getElementById('customer-phone').value;
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+        fetch('/billing/process-bill/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                items: cart,
+                customer_name: customerName,
+                customer_phone: customerPhone,
+                payment_method: paymentMethod
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to the new detailed receipt page
+                window.location.href = `/billing/bill/${data.bill_id}/`;
+            } else {
+                alert("Error: " + data.error);
+            }
+        });
+    });
+</script>
+{% endblock %}

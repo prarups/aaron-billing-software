@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Bill #{{ bill.id }} - Aaron Billing{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <!-- Receipt Header -->
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold text-primary">{{ bill.branch.name }}</h4>
+                    <p class="text-muted small mb-0">Tax Invoice / Cash Bill</p>
+                </div>
+
+                <!-- Bill Meta -->
+                <div class="row mb-3 pb-3 border-bottom">
+                    <div class="col-6">
+                        <p class="small mb-1"><span class="text-muted">Bill No</span><br><strong>#{{ bill.id }}</strong></p>
+                        <p class="small mb-0"><span class="text-muted">Date</span><br><strong>{{ bill.created_at|date:"d M Y, h:i A" }}</strong></p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p class="small mb-1"><span class="text-muted">Customer</span><br><strong>{{ bill.customer_name|default:"Walk-in" }}</strong></p>
+                        {% if bill.customer_phone %}
+                        <p class="small mb-0"><span class="text-muted">Phone</span><br><strong>{{ bill.customer_phone }}</strong></p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <table class="table table-sm align-middle mb-3">
+                    <thead class="bg-light">
+                        <tr class="small text-muted fw-bold">
+                            <th>#</th>
+                            <th>Product</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Price</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="small">{{ forloop.counter }}</td>
+                            <td class="fw-semibold">{{ item.product.name }}</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end small">₹{{ item.unit_price }}</td>
+                            <td class="text-end fw-bold">₹{{ item.subtotal }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Grand Total -->
+                <div class="d-flex justify-content-end border-bottom pb-3 mb-3">
+                    <div class="text-end">
+                        <p class="small text-muted mb-0">Grand Total</p>
+                        <h4 class="fw-bold text-primary mb-0">₹{{ bill.total_amount }}</h4>
+                    </div>
+                </div>
+
+                <!-- Public Link for staff to copy -->
+                <div class="mb-4">
+                    <label class="form-label x-small text-muted text-uppercase fw-bold">Customer's Digital Link</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control bg-light border-0" value="{{ public_url }}" id="publicLink" readonly>
+                        <button class="btn btn-outline-primary shadow-sm" type="button" onclick="copyLink(this)">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    <a href="{% url 'bill_pdf' bill.id %}" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1 py-2">
+                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
+                    </a>
+                    {% if wa_link %}
+                    <a href="{{ wa_link }}" target="_blank" class="btn btn-success rounded-pill px-4 fw-bold flex-grow-1 py-2">
+                        <i class="bi bi-whatsapp me-2"></i>Send WhatsApp
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'pos_index' %}" class="btn btn-light rounded-pill px-4 py-2">
+                        <i class="bi bi-arrow-left"></i> New Bill
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyLink(btn) {
+    const copyText = document.getElementById("publicLink");
+    if (copyText) {
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        
+        // Change icon to tick
+        const icon = btn.querySelector('i');
+        if (icon) {
+            const originalClass = icon.className;
+            icon.className = 'bi bi-check2 text-success';
+            
+            // Revert after 2 seconds
+            setTimeout(() => {
+                icon.className = originalClass;
+            }, 2000);
+        }
+    }
+}
+</script>
+{% endblock %}

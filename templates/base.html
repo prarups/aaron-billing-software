@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aaron Billing{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --accent-color: #f59e0b;
+            --bg-color: #f9fafb;
+            --sidebar-bg: #ffffff;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: #1f2937;
+        }
+
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1rem;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.25rem;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* Responsive Sidebar for larger screens */
+        @media (min-width: 992px) {
+            .main-content {
+                padding: 2rem;
+            }
+        }
+
+        /* Fast POS Feel */
+        .pos-item-card {
+            transition: transform 0.1s ease;
+            cursor: pointer;
+        }
+
+        .pos-item-card:active {
+            transform: scale(0.98);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-receipt-cutoff me-2"></i>Aaron Billing
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                        </li>
+                        {% if user.role == 'owner' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'admin:core_branch_changelist' %}">Branches</a>
+                            </li>
+                        {% endif %}
+                        {% if user.role != 'staff' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'product_list' %}">Products</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% if user.role == 'owner' %}{% url 'owner_inventory_view' %}{% else %}{% url 'manager_inventory_list' %}{% endif %}">Inventory</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'owner_bill_list' %}">Sales Report</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'pos_index' %}">POS Billing</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center mt-3 mt-lg-0">
+                    {% if user.is_authenticated %}
+                        {% if user.get_accessible_branches.count > 1 or user.is_owner %}
+                        <form method="post" action="{% url 'switch_branch' %}" class="me-lg-3 mb-3 mb-lg-0">
+                            {% csrf_token %}
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0 rounded-start-pill"><i class="bi bi-shop"></i></span>
+                                <select name="branch_id" class="form-select border-0 bg-light rounded-end-pill" onchange="this.form.submit()">
+                                    {% for b in user.get_accessible_branches %}
+                                    <option value="{{ b.id }}" {% if b == user.active_branch %}selected{% endif %}>
+                                        {{ b.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                        {% endif %}
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="text-muted small">
+                                <i class="bi bi-person-circle me-1"></i>{{ user.username }}
+                            </span>
+                            <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Logout</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-primary rounded-pill px-4">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid main-content py-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 rounded-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

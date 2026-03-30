@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Dashboard - Aaron Billing{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card p-4 bg-primary text-white text-center shadow">
+            <h4 class="mb-2">Welcome, {{ user.username }}</h4>
+            <p class="text-white-50 small mb-4">{{ user.branch.name }} - Staff Dashboard</p>
+            <div class="d-grid">
+                <a href="{% url 'pos_index' %}" class="btn btn-light btn-lg rounded-pill fw-bold text-primary shadow-sm py-3 mb-2">
+                    <i class="bi bi-plus-circle-dotted me-2"></i>Create New Bill
+                </a>
+                <a href="{% url 'staff_activity' %}" class="btn btn-link text-white-50 x-small">View My Daily Activity</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-6">
+        <div class="card p-3 text-center">
+            <h6 class="text-muted small mb-1">Today's Sales</h6>
+            <h4 class="fw-bold">₹{{ my_sales_today|default:"0" }}</h4>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="card p-3 text-center">
+            <h6 class="text-muted small mb-1">Bills Created</h6>
+            <h4 class="fw-bold">{{ my_bill_count }}</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold m-0">Daily Activity</h5>
+                <input type="date" class="form-control form-control-sm w-auto" value="{{ today_date }}">
+            </div>
+            <div class="list-group list-group-flush">
+                {% for bill in recent_my_bills %}
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold small">#{{ bill.id }} - {{ bill.customer_name|default:"Guest" }}</span>
+                        <span class="text-success small fw-bold">₹{{ bill.total_amount }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="bi bi-receipt-cutoff fs-1 text-muted opacity-25 mb-3 d-block"></i>
+                    <p class="text-muted">No bills generated today.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

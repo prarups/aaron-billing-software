@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Product - Aaron Billing{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white">
+            <h5 class="fw-bold mb-4 text-primary">{{ action }} Product</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Product Name</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Barcode</label>
+                    {{ form.barcode }}
+                    <div class="form-text x-small">Scan or type the barcode for POS</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Unit Price (₹)</label>
+                    {{ form.price }}
+                </div>
+                
+                {% if action == 'Add New' %}
+                <div class="bg-light p-3 rounded-3 mb-4 border border-light">
+                    <h6 class="fw-bold small mb-3 text-primary d-flex align-items-center">
+                        <i class="bi bi-geo-alt-fill me-2"></i> Initial Stock
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label x-small fw-bold text-muted">Branch Location</label>
+                        {{ form.initial_branch }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label x-small fw-bold text-muted">Stock Quantity</label>
+                        {{ form.initial_stock }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2 d-md-flex mt-4">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 flex-grow-1 fw-bold shadow-sm">
+                        <i class="bi bi-save me-1"></i> Save
+                    </button>
+                    <a href="{% url 'product_list' %}" class="btn btn-light rounded-pill px-4 py-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

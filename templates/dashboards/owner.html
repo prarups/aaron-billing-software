@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Owner Dashboard - Aaron Billing{% endblock %}
+
+{% block content %}
+    <div class="col-md-3">
+        <div class="card p-3 h-100 bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-white-50 small mb-0">Total Sales (Today)</h6>
+                <a href="{% url 'export_sales_csv' %}" class="btn btn-sm btn-light rounded-pill x-small py-0">Export CSV</a>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0 fw-bold">₹{{ total_sales_today|default:"0.00" }}</h2>
+                <i class="bi bi-wallet2 fs-1 text-white-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small mb-1">Active Branches</h6>
+                    <h2 class="mb-0 fw-bold">{{ branch_count }}</h2>
+                </div>
+                <i class="bi bi-grid fs-1 text-primary-emphasis opacity-25"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small mb-1">Total Transactions (Today)</h6>
+                    <h2 class="mb-0 fw-bold">{{ transaction_count_today }}</h2>
+                </div>
+                <i class="bi bi-receipt fs-1 text-primary-emphasis opacity-25"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small mb-1">Low Stock Alerts</h6>
+                    <h2 class="mb-0 fw-bold text-danger">{{ low_stock_count }}</h2>
+                </div>
+                <i class="bi bi-exclamation-triangle fs-1 text-danger opacity-25"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-4">Branch-wise Performance</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Branch Name</th>
+                            <th>Manager</th>
+                            <th>Sales (Today)</th>
+                            <th>Monthly Goal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for branch in branches %}
+                        <tr>
+                            <td>{{ branch.name }}</td>
+                            <td>{{ branch.users.first.username|default:"-" }}</td>
+                            <td class="fw-bold">₹{{ branch.today_sales|default:"0" }}</td>
+                            <td>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 25%;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-4">Recent Sales</h5>
+            <div class="list-group list-group-flush">
+                {% for bill in recent_bills %}
+                <div class="list-group-item px-0 x-small">
+                    <div class="d-flex justify-content-between">
+                        <span>#{{ bill.id }} - {{ bill.branch.name|truncatechars:10 }}</span>
+                        <span class="fw-bold text-success">₹{{ bill.total_amount }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No transactions recorded yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
