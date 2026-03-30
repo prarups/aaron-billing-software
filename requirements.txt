@@ -15,7 +15,6 @@ lxml==6.0.2
 oscrypto==1.3.0
 pillow==12.1.1
 psycopg2==2.9.11
-pycairo==1.29.0
 pycparser==3.0
 pyHanko==0.34.1
 pyhanko-certvalidator==0.30.1
