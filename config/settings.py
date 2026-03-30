@@ -92,10 +92,10 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'aaron_billing_db',
+            'NAME': 'railway',
             'USER': 'postgres',
-            'PASSWORD': 'p@ssw0rd',
-            'HOST': 'localhost',
+            'PASSWORD': 'KQUFtsmqjZzkUdrhyDiaWbNjWQzAaZZf',
+            'HOST': 'postgres.railway.internal',
             'PORT': '5432',
         }
     }
