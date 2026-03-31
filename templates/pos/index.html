@@ -79,89 +79,140 @@
 {% endblock %}
 
 {% block content %}
-<div class="row g-1 pos-container">
-    <!-- POS Actions (Left Side) -->
-    <div class="col-7">
-        <div class="card p-3 mb-4 border-0 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold m-0 text-primary"><i class="bi bi-search me-2"></i>Add Products</h5>
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" id="toggle-scanner">
-                    <i class="bi bi-camera me-1"></i> Scan
-                </button>
-            </div>
-            
-            <!-- Scanner -->
-            <div class="scanner-container" id="scanner-wrapper">
-                <div id="reader"></div>
-            </div>
-
-            <!-- Manual Search -->
-            <div class="row g-2">
-                <div class="col-8">
-                    <input type="text" id="barcode-input" class="form-control rounded-pill border-0 shadow-sm bg-light" placeholder="Barcode...">
-                </div>
-                <div class="col-4">
-                    <button class="btn btn-primary w-100 rounded-pill shadow-sm" id="add-by-barcode">Add</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Product List / Quick Pick -->
-        <div class="card p-3 border-0 shadow-sm mb-4">
-            <h6 class="text-muted small fw-bold mb-3">Quick Select</h6>
-            <div class="row g-2">
-                {% for item in inventory %}
-                <div class="col-4 col-sm-3 col-md-2">
-                    <div class="pos-item-card card p-1 text-center h-100 border-light bg-light shadow-none" onclick="addToCart('{{ item.product.id }}', '{{ item.product.name }}', '{{ item.product.price }}')">
-                        <div class="fw-bold x-small text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</div>
-                        <div class="text-primary fw-bold x-small">₹{{ item.product.price }}</div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="col-12 text-center py-4 text-muted">No products found.</div>
-                {% endfor %}
-            </div>
+<div class="pos-wrapper animate-fade-in">
+    <!-- Mobile Tabs Toggle (Shown only on mobile) -->
+    <div class="d-lg-none mb-3">
+        <div class="glass-card p-1 d-flex">
+            <button class="btn btn-vibrant flex-grow-1 rounded-pill-sm py-2 mx-1" id="tab-catalog" onclick="switchTab('catalog')">
+                <i class="bi bi-grid-3x3-gap me-2"></i>Catalog
+            </button>
+            <button class="btn btn-outline-primary flex-grow-1 border-0 rounded-pill-sm py-2 mx-1" id="tab-cart" onclick="switchTab('cart')">
+                <i class="bi bi-cart3 me-2"></i>Cart <span class="badge bg-primary ms-1" id="mobile-cart-badge">0</span>
+            </button>
         </div>
     </div>
 
-    <!-- Cart (Right Side) -->
-    <div class="col-5 col-lg-4">
-        <div class="card h-100 d-flex flex-column shadow-sm border-0 cart-card">
-            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold m-0 text-primary"><i class="bi bi-cart3 me-2"></i>Current Bill</h5>
-                <span class="badge bg-primary rounded-pill h6 mb-0" id="cart-count">0 items</span>
-            </div>
-            <div class="card-body flex-grow-1 overflow-auto p-3" id="cart-container" style="max-height: 500px;">
-                <div class="text-center py-5" id="empty-cart-msg">
-                    <i class="bi bi-cart-x fs-1 text-muted opacity-25 d-block mb-3"></i>
-                    <p class="text-muted">Empty Cart</p>
+    <div class="row g-3 pos-container">
+        <!-- POS Catalog (Left Side on Desktop) -->
+        <div class="col-lg-7" id="section-catalog">
+            <div class="glass-card p-4 mb-3 border-0 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0 text-primary"><i class="bi bi-search me-2"></i>Search Items</h5>
+                    <button class="btn btn-vibrant btn-sm rounded-pill px-3 shadow-sm" id="toggle-scanner">
+                        <i class="bi bi-camera me-1"></i> Scan
+                    </button>
                 </div>
-            </div>
-            <div class="card-footer bg-white p-3 border-0 shadow-lg cart-footer-sticky" style="border-radius: 0 0 1rem 1rem;">
-                <div class="mb-2">
-                    <input type="text" id="customer-name" class="form-control form-control-sm mb-2 rounded-pill bg-light border-0" placeholder="Name">
-                    <input type="text" id="customer-phone" class="form-control form-control-sm rounded-pill bg-light border-0" placeholder="WhatsApp">
+                
+                <!-- Scanner -->
+                <div class="scanner-container mb-3" id="scanner-wrapper">
+                    <div id="reader"></div>
                 </div>
-                <div class="mb-2">
-                    <div class="btn-group w-100 btn-group-sm" role="group">
-                        <input type="radio" class="btn-check" name="payment_method" id="pay-cash" value="cash" checked autocomplete="off">
-                        <label class="btn btn-outline-success rounded-start-pill" for="pay-cash">Cash</label>
-                        
-                        <input type="radio" class="btn-check" name="payment_method" id="pay-online" value="online" autocomplete="off">
-                        <label class="btn btn-outline-primary rounded-end-pill" for="pay-online">Online</label>
+
+                <!-- Manual Search -->
+                <div class="row g-2">
+                    <div class="col-8 col-md-9">
+                        <input type="text" id="barcode-input" class="form-control rounded-pill border-0 shadow-sm bg-light py-2 px-4" placeholder="Enter Barcode...">
+                    </div>
+                    <div class="col-4 col-md-3">
+                        <button class="btn btn-vibrant w-100 rounded-pill shadow-sm py-2" id="add-by-barcode">Add</button>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
-                    <h6 class="fw-bold mb-0">Total:</h6>
-                    <h5 class="fw-bold text-primary mb-0" id="cart-total">₹0.00</h5>
+            </div>
+
+            <!-- Product List / Quick Pick -->
+            <div class="glass-card p-4 border-0 shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-muted small fw-bold m-0">QUICK SELECT</h6>
+                    <span class="text-primary small fw-bold">{{ inventory.count }} Items</span>
                 </div>
-                <button class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow-sm" id="checkout-btn" disabled>
-                    <i class="bi bi-check2-circle me-1"></i> PROCESS
-                </button>
+                <div class="row g-2 product-grid">
+                    {% for item in inventory %}
+                    <div class="col-4 col-sm-3 col-md-2">
+                        <div class="pos-item-card glass-card p-2 text-center h-100 border-0 bg-white" 
+                             id="product-{{ item.product.id }}"
+                             onclick="addToCart('{{ item.product.id }}', '{{ item.product.name }}', '{{ item.product.price }}', '{{ item.stock_quantity }}')">
+                            <div class="fw-bold x-small text-truncate text-dark mb-1" title="{{ item.product.name }}">{{ item.product.name }}</div>
+                            <div class="text-primary fw-bold small">₹{{ item.product.price|floatformat:0 }}</div>
+                            <div class="text-muted x-small mt-1 opacity-75">S: {{ item.stock_quantity }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                        No products available.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart (Right Side on Desktop) -->
+        <div class="col-lg-5 d-none d-lg-block" id="section-cart">
+            <div class="glass-card h-100 d-flex flex-column shadow-sm border-0 cart-card">
+                <div class="card-header bg-transparent py-4 px-4 border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold m-0 text-primary"><i class="bi bi-bag-check-fill me-2"></i>Checkout</h5>
+                    <span class="badge bg-vibrant rounded-pill px-3 py-2" id="cart-count">0 Items</span>
+                </div>
+                <div class="card-body flex-grow-1 overflow-auto px-4 py-0" id="cart-container" style="min-height: 300px; max-height: 60vh;">
+                    <div class="text-center py-5" id="empty-cart-msg">
+                        <i class="bi bi-cart-x fs-1 text-muted opacity-25 d-block mb-3"></i>
+                        <p class="text-muted">No items added to bill.</p>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent p-4 border-0">
+                    <div class="glass-card p-3 mb-3 bg-light bg-opacity-50 border-0">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white border-0 rounded-pill-sm me-1"><i class="bi bi-person"></i></span>
+                                    <input type="text" id="customer-name" class="form-control form-control-sm rounded-pill-sm bg-white border-0" placeholder="Customer Name">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white border-0 rounded-pill-sm me-1"><i class="bi bi-whatsapp"></i></span>
+                                    <input type="text" id="customer-phone" class="form-control form-control-sm rounded-pill-sm bg-white border-0" placeholder="Phone Number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="btn-group w-100 shadow-sm" role="group">
+                            <input type="radio" class="btn-check" name="payment_method" id="pay-cash" value="cash" checked autocomplete="off">
+                            <label class="btn btn-outline-secondary border-0 py-2 rounded-start-pill" for="pay-cash">CASH</label>
+                            
+                            <input type="radio" class="btn-check" name="payment_method" id="pay-online" value="online" autocomplete="off">
+                            <label class="btn btn-outline-secondary border-0 py-2 rounded-end-pill" for="pay-online">ONLINE</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="text-muted fw-bold">TOTAL AMOUNT</span>
+                        <h3 class="fw-bold text-primary mb-0" id="cart-total">₹0</h3>
+                    </div>
+                    
+                    <button class="btn btn-vibrant w-100 rounded-pill py-3 fw-bold shadow-lg" id="checkout-btn" disabled>
+                        <i class="bi bi-check-all fs-4 me-2"></i> COMPLETE BILLING
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Extra Mobile Specific CSS -->
+<style>
+    @media (max-width: 991.98px) {
+        .pos-container { margin-bottom: 5rem; }
+        .product-grid .col-4 { flex: 0 0 33.333%; }
+        .cart-card { min-height: 80vh; }
+    }
+    .pos-item-card {
+        user-select: none;
+    }
+    .stats-card::after { opacity: 0.1; }
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -171,15 +222,49 @@
     const html5QrCode = new Html5Qrcode("reader");
     let isScannerOpen = false;
 
+    // Mobile tabs
+    function switchTab(tab) {
+        const catalog = document.getElementById('section-catalog');
+        const cartSection = document.getElementById('section-cart');
+        const tabCatalog = document.getElementById('tab-catalog');
+        const tabCart = document.getElementById('tab-cart');
+
+        if (tab === 'catalog') {
+            catalog.classList.remove('d-none');
+            cartSection.classList.add('d-none');
+            tabCatalog.className = 'btn btn-vibrant flex-grow-1 rounded-pill-sm py-2 mx-1';
+            tabCart.className = 'btn btn-outline-primary flex-grow-1 border-0 rounded-pill-sm py-2 mx-1';
+        } else {
+            catalog.classList.add('d-none');
+            cartSection.classList.remove('d-none', 'd-lg-block');
+            tabCatalog.className = 'btn btn-outline-primary flex-grow-1 border-0 rounded-pill-sm py-2 mx-1';
+            tabCart.className = 'btn btn-vibrant flex-grow-1 rounded-pill-sm py-2 mx-1';
+        }
+    }
+
     // Cart Management
-    function addToCart(id, name, price) {
+    function addToCart(id, name, price, stock) {
+        const productEl = document.getElementById(`product-${id}`);
+        if (productEl) {
+            productEl.classList.add('cart-added');
+            setTimeout(() => productEl.classList.remove('cart-added'), 300);
+        }
+
         const existing = cart.find(item => item.id === id);
+        const maxStock = parseInt(stock);
         if (existing) {
+            if (existing.quantity >= maxStock) {
+                alert(`Insufficient Stock: Only ${maxStock} units available.`);
+                return;
+            }
             existing.quantity++;
         } else {
-            cart.push({ id, name, price: parseFloat(price), quantity: 1 });
+            cart.push({ id, name, price: parseFloat(price), quantity: 1, stock: maxStock });
         }
         renderCart();
+        
+        // Haptic feel
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
     }
 
     function removeFromCart(id) {
@@ -190,6 +275,10 @@
     function updateQty(id, delta) {
         const item = cart.find(i => i.id === id);
         if (item) {
+            if (delta > 0 && item.quantity >= item.stock) {
+                alert(`Insufficient Stock: Only ${item.stock} units available.`);
+                return;
+            }
             item.quantity += delta;
             if (item.quantity <= 0) removeFromCart(id);
             else renderCart();
@@ -200,6 +289,7 @@
         const container = document.getElementById('cart-container');
         const totalEl = document.getElementById('cart-total');
         const countEl = document.getElementById('cart-count');
+        const badgeEl = document.getElementById('mobile-cart-badge');
         const checkoutBtn = document.getElementById('checkout-btn');
 
         if (cart.length === 0) {
@@ -207,8 +297,9 @@
                                     <i class="bi bi-cart-x fs-1 text-muted opacity-25 d-block mb-3"></i>
                                     <p class="text-muted">Empty Cart</p>
                                    </div>`;
-            totalEl.innerText = "₹0.00";
-            countEl.innerText = "0 items";
+            totalEl.innerText = "₹0";
+            countEl.innerText = "0 Items";
+            if (badgeEl) badgeEl.innerText = "0";
             checkoutBtn.disabled = true;
             return;
         }
@@ -223,19 +314,19 @@
             total += subtotal;
             count += item.quantity;
             const itemHtml = `
-                <div class="cart-item">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="cart-item-name">${item.name}</span>
-                        <span class="cart-item-price">₹${subtotal.toFixed(2)}</span>
+                <div class="cart-item glass-card p-3 mb-2 bg-white border-0 shadow-none">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold small">${item.name}</span>
+                        <span class="fw-bold text-primary">₹${Math.round(subtotal)}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="input-group qty-control">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="updateQty('${item.id}', -1)">-</button>
-                            <input type="text" class="form-control form-control-sm text-center border-secondary-subtle py-0" value="${item.quantity}" readonly>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="updateQty('${item.id}', 1)">+</button>
+                        <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1">
+                            <button class="btn btn-sm btn-link text-muted p-0" onclick="updateQty('${item.id}', -1)"><i class="bi bi-dash-circle-fill"></i></button>
+                            <span class="mx-3 fw-bold small">${item.quantity}</span>
+                            <button class="btn btn-sm btn-link text-primary p-0" onclick="updateQty('${item.id}', 1)"><i class="bi bi-plus-circle-fill"></i></button>
                         </div>
                         <button class="btn btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
-                            <i class="bi bi-trash"></i>
+                            <i class="bi bi-x-circle"></i>
                         </button>
                     </div>
                 </div>
@@ -243,8 +334,9 @@
             container.insertAdjacentHTML('beforeend', itemHtml);
         });
 
-        totalEl.innerText = `₹${total.toFixed(2)}`;
-        countEl.innerText = `${count} items`;
+        totalEl.innerText = `₹${Math.round(total)}`;
+        countEl.innerText = `${count} Items`;
+        if (badgeEl) badgeEl.innerText = count;
     }
 
     // Barcode Search
@@ -257,7 +349,7 @@
             .then(data => {
                 if (data.error) alert(data.error);
                 else {
-                    addToCart(data.id.toString(), data.name, data.price);
+                    addToCart(data.id.toString(), data.name, data.price, data.stock);
                     document.getElementById('barcode-input').value = '';
                 }
             });
@@ -266,24 +358,26 @@
     // Scanner
     document.getElementById('toggle-scanner').addEventListener('click', () => {
         const wrapper = document.getElementById('scanner-wrapper');
+        const btn = document.getElementById('toggle-scanner');
         if (isScannerOpen) {
             html5QrCode.stop().then(() => {
                 wrapper.style.display = 'none';
                 isScannerOpen = false;
+                btn.innerHTML = '<i class="bi bi-camera me-1"></i> Scan';
             });
         } else {
             wrapper.style.display = 'block';
+            btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Close';
             html5QrCode.start(
                 { facingMode: "environment" }, 
                 { fps: 10, qrbox: { width: 250, height: 150 } },
                 (decodedText) => {
-                    // Success
                     fetch(`/billing/get-product/?barcode=${decodedText}`)
                         .then(res => res.json())
                         .then(data => {
                             if (!data.error) {
-                                addToCart(data.id.toString(), data.name, data.price);
-                                // Play success sound if needed
+                                addToCart(data.id.toString(), data.name, data.price, data.stock);
+                                if (window.navigator.vibrate) window.navigator.vibrate(100);
                             }
                         });
                 },
@@ -296,6 +390,10 @@
 
     // Checkout
     document.getElementById('checkout-btn').addEventListener('click', () => {
+        const btn = document.getElementById('checkout-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>PROCESSING...';
+
         const customerName = document.getElementById('customer-name').value;
         const customerPhone = document.getElementById('customer-phone').value;
         const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
@@ -316,12 +414,23 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Redirect to the new detailed receipt page
                 window.location.href = `/billing/bill/${data.bill_id}/`;
             } else {
                 alert("Error: " + data.error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-all fs-4 me-2"></i> COMPLETE BILLING';
             }
+        })
+        .catch(err => {
+            alert("Network error. Please try again.");
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-all fs-4 me-2"></i> COMPLETE BILLING';
         });
     });
+
+    // Initial State Check
+    if (window.innerWidth < 992) {
+        switchTab('catalog');
+    }
 </script>
 {% endblock %}

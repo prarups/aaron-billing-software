@@ -37,6 +37,20 @@
                         {{ form.initial_stock }}
                     </div>
                 </div>
+                {% elif form.stock_quantity %}
+                <div class="bg-light p-3 rounded-3 mb-4 border border-light">
+                    <h6 class="fw-bold small mb-3 text-primary d-flex align-items-center">
+                        <i class="bi bi-box-seam-fill me-2"></i> Branch Inventory (Active Branch)
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label x-small fw-bold text-muted">Current Stock</label>
+                        {{ form.stock_quantity }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label x-small fw-bold text-muted">Low Stock Alert Level</label>
+                        {{ form.low_stock_threshold }}
+                    </div>
+                </div>
                 {% endif %}
                 
                 <div class="d-grid gap-2 d-md-flex mt-4">

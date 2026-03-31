@@ -56,9 +56,9 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <p class="fw-semibold mb-0">{{ item.product.name }}</p>
-                            <p class="x-small text-muted mb-0">₹{{ item.unit_price }} x {{ item.quantity }}</p>
+                            <p class="x-small text-muted mb-0">₹{{ item.unit_price|floatformat:0 }} x {{ item.quantity }}</p>
                         </div>
-                        <p class="fw-bold mb-0">₹{{ item.subtotal }}</p>
+                        <p class="fw-bold mb-0">₹{{ item.subtotal|floatformat:0 }}</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -67,7 +67,7 @@
                 <div class="bg-light rounded-4 p-4 mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-0">
                         <span class="fw-bold text-muted">Grand Total</span>
-                        <span class="h4 fw-bold text-primary mb-0">₹{{ bill.total_amount }}</span>
+                        <span class="h4 fw-bold text-primary mb-0">₹{{ bill.total_amount|floatformat:0 }}</span>
                     </div>
                 </div>
 

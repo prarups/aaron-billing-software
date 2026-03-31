@@ -3,57 +3,64 @@
 {% block title %}Owner Dashboard - Aaron Billing{% endblock %}
 
 {% block content %}
+<div class="row g-4 mb-4 animate-fade-in">
     <div class="col-md-3">
-        <div class="card p-3 h-100 bg-primary text-white">
+        <div class="glass-card p-4 h-100 bg-vibrant stats-card">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="text-white-50 small mb-0">Total Sales (Today)</h6>
-                <a href="{% url 'export_sales_csv' %}" class="btn btn-sm btn-light rounded-pill x-small py-0">Export CSV</a>
+                <a href="{% url 'export_sales_csv' %}" class="btn btn-sm btn-light rounded-pill x-small py-0 opacity-75">Export CSV</a>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0 fw-bold">₹{{ total_sales_today|default:"0.00" }}</h2>
+                <h2 class="mb-0 fw-bold">₹{{ total_sales_today|default:"0"|floatformat:0 }}</h2>
                 <i class="bi bi-wallet2 fs-1 text-white-50"></i>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card p-3 h-100">
+        <div class="glass-card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="text-muted small mb-1">Active Branches</h6>
                     <h2 class="mb-0 fw-bold">{{ branch_count }}</h2>
                 </div>
-                <i class="bi bi-grid fs-1 text-primary-emphasis opacity-25"></i>
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-grid text-primary fs-3"></i>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card p-3 h-100">
+        <div class="glass-card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="text-muted small mb-1">Total Transactions (Today)</h6>
                     <h2 class="mb-0 fw-bold">{{ transaction_count_today }}</h2>
                 </div>
-                <i class="bi bi-receipt fs-1 text-primary-emphasis opacity-25"></i>
+                <div class="bg-info bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-receipt text-info fs-3"></i>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card p-3 h-100">
+        <div class="glass-card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="text-muted small mb-1">Low Stock Alerts</h6>
                     <h2 class="mb-0 fw-bold text-danger">{{ low_stock_count }}</h2>
                 </div>
-                <i class="bi bi-exclamation-triangle fs-1 text-danger opacity-25"></i>
+                <div class="bg-danger bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-exclamation-triangle text-danger fs-3"></i>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 animate-fade-in" style="animation-delay: 0.1s;">
     <div class="col-md-8">
-        <div class="card p-4">
-            <h5 class="fw-bold mb-4">Branch-wise Performance</h5>
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-bar-chart-fill me-2"></i>Branch Performance</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -83,8 +90,8 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card p-4">
-            <h5 class="fw-bold mb-4">Recent Sales</h5>
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-clock-history me-2"></i>Recent Sales</h5>
             <div class="list-group list-group-flush">
                 {% for bill in recent_bills %}
                 <div class="list-group-item px-0 x-small">

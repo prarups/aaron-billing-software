@@ -3,14 +3,14 @@
 {% block title %}Bill #{{ bill.id }} - Aaron Billing{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center animate-fade-in">
     <div class="col-md-7">
-        <div class="card border-0 shadow-sm">
+        <div class="glass-card border-0 shadow-lg overflow-hidden">
             <!-- Receipt Header -->
             <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <h4 class="fw-bold text-primary">{{ bill.branch.name }}</h4>
-                    <p class="text-muted small mb-0">Tax Invoice / Cash Bill</p>
+                <div class="text-center mb-4 bg-vibrant p-4 mx-n4 mt-n4">
+                    <h3 class="fw-bold text-white mb-1">{{ bill.branch.name }}</h3>
+                    <p class="text-white opacity-75 small mb-0">Tax Invoice / Official Bill</p>
                 </div>
 
                 <!-- Bill Meta -->
@@ -44,44 +44,46 @@
                             <td class="small">{{ forloop.counter }}</td>
                             <td class="fw-semibold">{{ item.product.name }}</td>
                             <td class="text-center">{{ item.quantity }}</td>
-                            <td class="text-end small">₹{{ item.unit_price }}</td>
-                            <td class="text-end fw-bold">₹{{ item.subtotal }}</td>
+                            <td class="text-end small">₹{{ item.unit_price|floatformat:0 }}</td>
+                            <td class="text-end fw-bold">₹{{ item.subtotal|floatformat:0 }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
 
                 <!-- Grand Total -->
-                <div class="d-flex justify-content-end border-bottom pb-3 mb-3">
-                    <div class="text-end">
-                        <p class="small text-muted mb-0">Grand Total</p>
-                        <h4 class="fw-bold text-primary mb-0">₹{{ bill.total_amount }}</h4>
+                <div class="bg-vibrant glass-card p-4 mx-n2 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-white opacity-75 fw-bold">TOTAL AMOUNT</span>
+                        <h2 class="fw-bold text-white mb-0">₹{{ bill.total_amount|floatformat:0 }}</h2>
                     </div>
                 </div>
 
                 <!-- Public Link for staff to copy -->
-                <div class="mb-4">
-                    <label class="form-label x-small text-muted text-uppercase fw-bold">Customer's Digital Link</label>
+                <div class="glass-card p-3 mb-4 bg-light bg-opacity-50 border-0">
+                    <label class="form-label x-small text-muted text-uppercase fw-bold mb-2">Customer's Digital Receipt</label>
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control bg-light border-0" value="{{ public_url }}" id="publicLink" readonly>
-                        <button class="btn btn-outline-primary shadow-sm" type="button" onclick="copyLink(this)">
+                        <input type="text" class="form-control bg-white border-0 py-2 rounded-pill-sm me-1 px-3" value="{{ public_url }}" id="publicLink" readonly>
+                        <button class="btn btn-vibrant rounded-pill-sm px-3 shadow-none" type="button" onclick="copyLink(this)">
                             <i class="bi bi-copy"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="d-flex gap-2">
-                    <a href="{% url 'bill_pdf' bill.id %}" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1 py-2">
-                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
-                    </a>
-                    {% if wa_link %}
-                    <a href="{{ wa_link }}" target="_blank" class="btn btn-success rounded-pill px-4 fw-bold flex-grow-1 py-2">
-                        <i class="bi bi-whatsapp me-2"></i>Send WhatsApp
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'pos_index' %}" class="btn btn-light rounded-pill px-4 py-2">
-                        <i class="bi bi-arrow-left"></i> New Bill
+                <div class="d-grid gap-3">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'bill_pdf' bill.id %}" class="btn btn-vibrant rounded-pill-sm px-4 fw-bold flex-grow-1 py-3 shadow">
+                            <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
+                        </a>
+                        {% if wa_link %}
+                        <a href="{{ wa_link }}" target="_blank" class="btn btn-success rounded-pill-sm px-4 fw-bold flex-grow-1 py-3 shadow">
+                            <i class="bi bi-whatsapp me-2"></i>Send Bill
+                        </a>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'pos_index' %}" class="btn btn-outline-primary rounded-pill-sm px-4 py-3 border-0 bg-light">
+                        <i class="bi bi-plus-circle me-1"></i> New Transaction
                     </a>
                 </div>
             </div>

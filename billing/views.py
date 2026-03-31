@@ -1,9 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, F, Subquery, OuterRef
 from django.template.loader import get_template
 from core.models import Product
 from inventory.models import Inventory
@@ -23,7 +23,10 @@ def pos_index(request):
     if not request.user.active_branch:
         return render(request, 'pos/index.html', {'error': 'No active branch selected. Please log in again.'})
     
-    inventory_items = Inventory.objects.filter(branch=request.user.active_branch).select_related('product')
+    inventory_items = Inventory.objects.filter(
+        branch=request.user.active_branch, 
+        stock_quantity__gt=0
+    ).select_related('product')
     return render(request, 'pos/index.html', {'inventory': inventory_items})
 
 @login_required
@@ -34,7 +37,11 @@ def get_product_by_barcode(request):
     
     try:
         # Check if product exists and is in the user's active branch inventory
-        inventory_item = Inventory.objects.get(product__barcode=barcode, branch=request.user.active_branch)
+        inventory_item = Inventory.objects.get(
+            product__barcode=barcode, 
+            branch=request.user.active_branch,
+            stock_quantity__gt=0
+        )
         product = inventory_item.product
         return JsonResponse({
             'id': product.id,
@@ -59,38 +66,45 @@ def process_bill(request):
             if not items:
                 return JsonResponse({'error': 'Cart is empty'}, status=400)
             
-            total_amount = sum(float(item['price']) * int(item['quantity']) for item in items)
-            
-            # Create Bill
-            bill = Bill.objects.create(
-                branch=request.user.active_branch,
-                staff=request.user,
-                customer_name=customer_name,
-                customer_phone=customer_phone,
-                total_amount=total_amount,
-                payment_method=payment_method
-            )
-            
-            # Create BillItems and Update Inventory
-            for item in items:
-                product = get_object_or_404(Product, id=item['id'])
-                quantity = int(item['quantity'])
-                
-                # Check and update inventory
-                inventory = Inventory.objects.get(branch=request.user.active_branch, product=product)
-                if inventory.stock_quantity < quantity:
-                    raise ValueError(f"Insufficient stock for {product.name}")
-                
-                inventory.stock_quantity -= quantity
-                inventory.save()
-                
-                BillItem.objects.create(
-                    bill=bill,
-                    product=product,
-                    quantity=quantity,
-                    unit_price=product.price,
+            with transaction.atomic():
+                # Create Bill
+                bill = Bill.objects.create(
+                    branch=request.user.active_branch,
+                    staff=request.user,
+                    customer_name=customer_name,
+                    customer_phone=customer_phone,
+                    total_amount=0,  # Will update after items
+                    payment_method=payment_method
                 )
-            
+                
+                total_amount = 0
+                for item in items:
+                    # select_for_update prevents race conditions on stock
+                    product = get_object_or_404(Product, id=item['id'])
+                    quantity = int(item['quantity'])
+                    
+                    inventory = Inventory.objects.select_for_update().get(
+                        branch=request.user.active_branch, 
+                        product=product
+                    )
+                    
+                    if inventory.stock_quantity < quantity:
+                        raise ValueError(f"Insufficient stock for {product.name}")
+                    
+                    inventory.stock_quantity -= quantity
+                    inventory.save()
+                    
+                    bill_item = BillItem.objects.create(
+                        bill=bill,
+                        product=product,
+                        quantity=quantity,
+                        unit_price=product.price,
+                    )
+                    total_amount += bill_item.subtotal
+                
+                bill.total_amount = total_amount
+                bill.save()
+                
             return JsonResponse({'success': True, 'bill_id': bill.id})
             
         except Exception as e:
@@ -101,7 +115,11 @@ def process_bill(request):
 @login_required
 def bill_detail(request, bill_id):
     """Show a web-based bill receipt with download & WhatsApp buttons."""
+    # Ensure user can only see bills from their active branch
     bill = get_object_or_404(Bill, id=bill_id)
+    if not request.user.is_superuser and bill.branch != request.user.active_branch:
+        return HttpResponse("Unauthorized to view this bill.", status=403)
+        
     items = bill.items.select_related('product').all()
     
     # Build WhatsApp message text
@@ -138,10 +156,39 @@ def public_bill_pdf(request, share_id):
     response['Content-Disposition'] = f'attachment; filename="Bill-{bill.id}.pdf"'
     
     buf = BytesIO()
-    pisa.CreatePDF(html, dest=buf)
+    pisa.CreatePDF(html, dest=buf, link_callback=link_callback)
     
     response.write(buf.getvalue())
     return response
+
+import os
+from django.conf import settings
+from django.contrib.staticfiles import finders
+
+def link_callback(uri, rel):
+    """
+    Convert HTML URIs to absolute system paths so xhtml2pdf can access those
+    resources on disk.
+    """
+    # use short variable names
+    s_url = settings.STATIC_URL
+    s_root = settings.STATIC_ROOT
+    m_url = settings.MEDIA_URL
+    m_root = settings.MEDIA_ROOT
+
+    if uri.startswith(m_url):
+        path = os.path.join(m_root, uri.replace(m_url, ""))
+    elif uri.startswith(s_url):
+        path = os.path.join(s_root, uri.replace(s_url, ""))
+        if not os.path.exists(path):
+            path = finders.find(uri.replace(s_url, ""))
+    else:
+        return uri
+
+    # make sure that file exists
+    if not os.path.isfile(path):
+        return uri
+    return path
 
 @login_required
 def bill_pdf(request, bill_id):
@@ -155,7 +202,7 @@ def bill_pdf(request, bill_id):
     response['Content-Disposition'] = f'attachment; filename="Bill-{bill.id}.pdf"'
     
     buf = BytesIO()
-    pisa_status = pisa.CreatePDF(html, dest=buf)
+    pisa_status = pisa.CreatePDF(html, dest=buf, link_callback=link_callback)
     if pisa_status.err:
         return HttpResponse("Error generating PDF", status=500)
     

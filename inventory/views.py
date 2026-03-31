@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import json
 from .models import Inventory
+from core.models import Branch, Product
 from django import forms
 
 class InventoryForm(forms.ModelForm):
@@ -71,7 +74,6 @@ def owner_inventory_view(request):
         except ValueError:
             pass
             
-    from core.models import Branch
     branches = Branch.objects.all()
 
     from django.core.paginator import Paginator
@@ -86,3 +88,46 @@ def owner_inventory_view(request):
         'start_date': start_date or '',
         'end_date': end_date or ''
     })
+
+@login_required
+def get_or_create_inventory(request, product_id):
+    """Redirect to the inventory update page, creating the record if it doesn't exist."""
+    branch = request.user.active_branch
+    if not branch:
+        return redirect('dashboard')
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    inventory, created = Inventory.objects.get_or_create(
+        branch=branch, 
+        product=product,
+        defaults={'stock_quantity': 0}
+    )
+    
+    return redirect('update_inventory', pk=inventory.pk)
+
+@login_required
+def update_inventory_stock_ajax(request, product_id):
+    """Update stock for the active branch via AJAX."""
+    branch = request.user.active_branch
+    if not branch:
+        return JsonResponse({'error': 'No active branch'}, status=400)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            new_stock = data.get('stock')
+            if new_stock is not None:
+                product = get_object_or_404(Product, id=product_id)
+                inventory, created = Inventory.objects.get_or_create(
+                    branch=branch, 
+                    product=product,
+                    defaults={'stock_quantity': 0}
+                )
+                inventory.stock_quantity = int(new_stock)
+                inventory.save()
+                return JsonResponse({'success': True, 'stock': inventory.stock_quantity})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+            
+    return JsonResponse({'error': 'Invalid request'}, status=405)

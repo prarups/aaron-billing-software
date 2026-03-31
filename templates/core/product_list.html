@@ -3,14 +3,28 @@
 {% block title %}Product Master - Aaron Billing{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold m-0 text-primary">Product Master</h4>
-    <a href="{% url 'product_create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Add
-    </a>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 animate-fade-in">
+    <div>
+        <h4 class="fw-bold m-0 text-primary">Product Master</h4>
+        <p class="text-muted small mb-0">Manage your product catalog and stock levels</p>
+    </div>
+    <div class="d-flex gap-2 mt-3 mt-md-0">
+        {% if active_filter == 'zero_stock' %}
+            <a href="{% url 'product_list' %}" class="btn btn-outline-secondary rounded-pill-sm px-4 shadow-sm btn-sm">
+                <i class="bi bi-x-circle me-1"></i> Clear Filter
+            </a>
+        {% else %}
+            <a href="{% url 'product_list' %}?filter=zero_stock" class="btn btn-outline-danger rounded-pill-sm px-4 shadow-sm btn-sm">
+                <i class="bi bi-filter me-1"></i> Zero Stock
+            </a>
+        {% endif %}
+        <a href="{% url 'product_create' %}" class="btn btn-vibrant rounded-pill-sm px-4 shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Add New
+        </a>
+    </div>
 </div>
 
-<div class="card border-0 shadow-sm overflow-hidden">
+<div class="glass-card border-0 shadow-sm overflow-hidden animate-fade-in" style="animation-delay: 0.1s;">
     <!-- Desktop Table View -->
     <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle mb-0">
@@ -19,6 +33,7 @@
                     <th class="ps-4">Product Name</th>
                     <th>Barcode</th>
                     <th>Price</th>
+                    <th>Stock</th>
                     <th class="text-center">Action</th>
                 </tr>
             </thead>
@@ -27,16 +42,31 @@
                 <tr>
                     <td class="ps-4 fw-bold text-dark">{{ product.name }}</td>
                     <td><code class="bg-light px-2 rounded-pill">{{ product.barcode }}</code></td>
-                    <td class="fw-bold text-primary">₹{{ product.price }}</td>
+                    <td class="fw-bold text-primary">
+                        <span class="inline-edit price-edit" data-id="{{ product.pk }}" data-type="price">
+                            ₹<span class="value">{{ product.price|floatformat:0 }}</span>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="inline-edit stock-edit" data-id="{{ product.id }}" data-type="stock">
+                            {% if product.stock is not None %}
+                                <span class="badge {% if product.stock <= 10 %}bg-danger{% else %}bg-success{% endif %} rounded-pill value">
+                                    {{ product.stock }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill value">0</span>
+                            {% endif %}
+                        </span>
+                    </td>
                     <td class="text-center">
-                        <a href="{% url 'product_update' product.pk %}" class="btn btn-light btn-sm rounded-pill text-muted shadow-sm">
+                        <a href="{% url 'product_update' product.pk %}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
                             <i class="bi bi-pencil-square me-1"></i> Edit
                         </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-5 text-muted">No products found. Start by adding one.</td>
+                    <td colspan="5" class="text-center py-5 text-muted">No products found. Start by adding one.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -44,25 +74,145 @@
     </div>
 
     <!-- Mobile Card View -->
-    <div class="d-md-none">
+    <div class="d-md-none bg-white bg-opacity-50">
         {% for product in products %}
-        <div class="p-3 border-bottom position-relative">
-            <div class="d-flex justify-content-between align-items-start">
+        <div class="p-4 border-bottom position-relative hover-lift">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                    <div class="fw-bold text-dark">{{ product.name }}</div>
-                    <div class="x-small text-muted mb-1">Barcode: <code>{{ product.barcode }}</code></div>
+                    <div class="fw-bold text-dark h6 mb-1">{{ product.name }}</div>
+                    <div class="x-small text-muted">ID: <code class="bg-light px-2 rounded-pill">{{ product.barcode }}</code></div>
                 </div>
                 <div class="text-end">
-                    <div class="fw-bold text-primary">₹{{ product.price }}</div>
+                    <div class="fw-bold text-primary h5 mb-0 inline-edit price-edit" data-id="{{ product.pk }}" data-type="price">
+                        ₹<span class="value">{{ product.price|floatformat:0 }}</span>
+                    </div>
                 </div>
             </div>
-            <a href="{% url 'product_update' product.pk %}" class="btn btn-light btn-sm rounded-pill text-muted mt-2 shadow-sm">
-                <i class="bi bi-pencil-square me-1"></i> Edit
-            </a>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="inline-edit stock-edit" data-id="{{ product.id }}" data-type="stock">
+                    {% if product.stock is not None %}
+                        <span class="badge {% if product.stock <= 10 %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3 py-2 value">
+                            Stock: {{ product.stock }}
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary rounded-pill px-3 py-2 value">Stock: 0</span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'product_update' product.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+            </div>
         </div>
         {% empty %}
         <div class="text-center py-5 text-muted small">No products found.</div>
         {% endfor %}
     </div>
 </div>
+
+<style>
+    .inline-edit { cursor: pointer; border-bottom: 1px dashed transparent; transition: all 0.2s; padding: 2px 5px; border-radius: 4px; }
+    .inline-edit:hover { border-bottom-color: var(--bs-primary); background: rgba(0,0,0,0.02); }
+    .edit-input { width: 80px; padding: 2px 5px; border-radius: 4px; border: 1px solid #ddd; outline: none; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const edits = document.querySelectorAll('.inline-edit');
+        
+        edits.forEach(el => {
+            el.addEventListener('click', function() {
+                if (this.querySelector('input')) return;
+                
+                const type = this.dataset.type;
+                const id = this.dataset.id;
+                const valueEl = this.querySelector('.value');
+                const originalText = valueEl.innerText.replace('Stock: ', '').trim();
+                
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.step = type === 'price' ? '0.01' : '1';
+                input.value = originalText;
+                input.className = 'edit-input';
+                
+                const originalDisplay = valueEl.style.display;
+                valueEl.style.display = 'none';
+                this.appendChild(input);
+                input.focus();
+                
+                const save = async () => {
+                    const newValue = input.value;
+                    if (newValue === originalText) {
+                        finish();
+                        return;
+                    }
+                    
+                    input.disabled = true;
+                    input.style.opacity = '0.5';
+                    
+                    const url = type === 'price' 
+                        ? `/core/products/update-price-ajax/${id}/` 
+                        : `/inventory/update-stock-ajax/${id}/`;
+                    
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ [type]: newValue })
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            valueEl.innerText = type === 'stock' ? (this.classList.contains('mt-1') ? 'Stock: ' + data[type] : data[type]) : data[type];
+                            // Update badge color if stock
+                            if (type === 'stock') {
+                                const badge = this.querySelector('.badge');
+                                if (badge) {
+                                    badge.classList.remove('bg-danger', 'bg-success', 'bg-secondary');
+                                    badge.classList.add(data[type] <= 10 ? 'bg-danger' : 'bg-success');
+                                }
+                            }
+                            finish();
+                        } else {
+                            alert('Error: ' + data.error);
+                            finish();
+                        }
+                    } catch (e) {
+                        alert('Network error');
+                        finish();
+                    }
+                };
+                
+                const finish = () => {
+                    input.remove();
+                    valueEl.style.display = originalDisplay;
+                };
+                
+                input.onblur = save;
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') save();
+                    if (e.key === 'Escape') finish();
+                };
+            });
+        });
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
 {% endblock %}
