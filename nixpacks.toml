@@ -1,18 +1,18 @@
+[variables]
+PKG_CONFIG_PATH = "/usr/lib/pkgconfig:/usr/share/pkgconfig:/root/.nix-profile/lib/pkgconfig"
+C_INCLUDE_PATH = "/root/.nix-profile/include"
+LIBRARY_PATH = "/root/.nix-profile/lib"
+LD_LIBRARY_PATH = "/root/.nix-profile/lib"
+
 [phases.setup]
-nixPkgs = ["python312", "gcc", "pkg-config", "cairo", "pango", "zlib", "postgresql"]
+nixPkgs = ["python312", "gcc", "pkg-config", "cairo", "pango", "zlib", "postgresql", "meson", "ninja"]
 
 [phases.install]
-# We point the compiler to the Nix library paths
 cmds = [
   "python -m venv /app/.venv",
   "/app/.venv/bin/pip install --upgrade pip",
-  "export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/.nix-profile/lib/pkgconfig && /app/.venv/bin/pip install -r requirements.txt"
+  "/app/.venv/bin/pip install -r requirements.txt"
 ]
 
 [phases.build]
 cmds = ["/app/.venv/bin/python manage.py collectstatic --noinput"]
-
-[variables]
-# This ensures the app can find the libraries at runtime too
-LD_LIBRARY_PATH = "/root/.nix-profile/lib"
-PKG_CONFIG_PATH = "/root/.nix-profile/lib/pkgconfig"
