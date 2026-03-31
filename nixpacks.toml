@@ -1,13 +1,18 @@
 [phases.setup]
-nixPkgs = ["python312", "gcc", "pkg-config", "cairo", "pango", "zlib", "postgresql", "libpqxx"]
+nixPkgs = ["python312", "gcc", "pkg-config", "cairo", "pango", "zlib", "postgresql"]
 
 [phases.install]
+# We point the compiler to the Nix library paths
 cmds = [
   "python -m venv /app/.venv",
   "/app/.venv/bin/pip install --upgrade pip",
-  "/app/.venv/bin/pip install -r requirements.txt"
+  "export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/.nix-profile/lib/pkgconfig && /app/.venv/bin/pip install -r requirements.txt"
 ]
 
 [phases.build]
-# We use the full path to the virtual environment's Python
 cmds = ["/app/.venv/bin/python manage.py collectstatic --noinput"]
+
+[variables]
+# This ensures the app can find the libraries at runtime too
+LD_LIBRARY_PATH = "/root/.nix-profile/lib"
+PKG_CONFIG_PATH = "/root/.nix-profile/lib/pkgconfig"
