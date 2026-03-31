@@ -89,20 +89,17 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            # External connections (local) need SSL. 
-            # Railway internal connections usually do not.
-            ssl_require=True if "proxy.rlwy.net" in DATABASE_URL else False
-        )
+        'default': dj_database_url.config(default=DATABASE_URL)
     }
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'aaron_billing_db',
+            'USER': 'postgres',
+            'PASSWORD': 'p@ssw0rd',
+            'HOST': 'localhost',
+            'PORT': '5432',
         }
     }
 
