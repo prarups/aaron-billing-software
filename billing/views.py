@@ -4,18 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction, models
 from django.utils import timezone
 from django.db.models import Sum, Count, F, Subquery, OuterRef
-from django.template.loader import get_template
 from core.models import Product
 from inventory.models import Inventory
 from .models import Bill, BillItem
 import json
 import csv
-from io import BytesIO
-try:
-    from xhtml2pdf import pisa
-    XHTML2PDF_AVAILABLE = True
-except ImportError:
-    XHTML2PDF_AVAILABLE = False
 
 @login_required
 def pos_index(request):
@@ -144,70 +137,6 @@ def public_bill_detail(request, share_id):
         'bill': bill,
         'items': items,
     })
-
-def public_bill_pdf(request, share_id):
-    """Publicly accessible PDF download for customers (no login required)."""
-    bill = get_object_or_404(Bill, share_id=share_id)
-    
-    template = get_template('billing/bill_pdf.html')
-    html = template.render({'bill': bill, 'request': request})
-    
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Bill-{bill.id}.pdf"'
-    
-    buf = BytesIO()
-    pisa.CreatePDF(html, dest=buf, link_callback=link_callback)
-    
-    response.write(buf.getvalue())
-    return response
-
-import os
-from django.conf import settings
-from django.contrib.staticfiles import finders
-
-def link_callback(uri, rel):
-    """
-    Convert HTML URIs to absolute system paths so xhtml2pdf can access those
-    resources on disk.
-    """
-    # use short variable names
-    s_url = settings.STATIC_URL
-    s_root = settings.STATIC_ROOT
-    m_url = settings.MEDIA_URL
-    m_root = settings.MEDIA_ROOT
-
-    if uri.startswith(m_url):
-        path = os.path.join(m_root, uri.replace(m_url, ""))
-    elif uri.startswith(s_url):
-        path = os.path.join(s_root, uri.replace(s_url, ""))
-        if not os.path.exists(path):
-            path = finders.find(uri.replace(s_url, ""))
-    else:
-        return uri
-
-    # make sure that file exists
-    if not os.path.isfile(path):
-        return uri
-    return path
-
-@login_required
-def bill_pdf(request, bill_id):
-    """Generate and return a real PDF invoice using xhtml2pdf."""
-    bill = get_object_or_404(Bill, id=bill_id)
-    
-    template = get_template('billing/bill_pdf.html')
-    html = template.render({'bill': bill, 'request': request})
-    
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Bill-{bill.id}.pdf"'
-    
-    buf = BytesIO()
-    pisa_status = pisa.CreatePDF(html, dest=buf, link_callback=link_callback)
-    if pisa_status.err:
-        return HttpResponse("Error generating PDF", status=500)
-    
-    response.write(buf.getvalue())
-    return response
 
 @login_required
 def staff_activity(request):

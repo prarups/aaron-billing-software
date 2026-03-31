@@ -73,9 +73,6 @@
                 <!-- Action Buttons -->
                 <div class="d-grid gap-3">
                     <div class="d-flex gap-2">
-                        <a href="{% url 'bill_pdf' bill.id %}" class="btn btn-vibrant rounded-pill-sm px-4 fw-bold flex-grow-1 py-3 shadow">
-                            <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
-                        </a>
                         {% if wa_link %}
                         <a href="{{ wa_link }}" target="_blank" class="btn btn-success rounded-pill-sm px-4 fw-bold flex-grow-1 py-3 shadow">
                             <i class="bi bi-whatsapp me-2"></i>Send Bill
