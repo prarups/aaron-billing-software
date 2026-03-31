@@ -1,12 +1,13 @@
 [phases.setup]
-nixPkgs = ["python312", "gcc", "pkg-config", "cairo", "pango", "zlib"]
+nixPkgs = ["python312", "gcc", "pkg-config", "cairo", "pango", "zlib", "postgresql", "libpqxx"]
 
 [phases.install]
-# Use '.' instead of 'source' and ensure pip is upgraded
 cmds = [
   "python -m venv /app/.venv",
-  ". /app/.venv/bin/activate && python -m pip install --upgrade pip && pip install -r requirements.txt"
+  "/app/.venv/bin/pip install --upgrade pip",
+  "/app/.venv/bin/pip install -r requirements.txt"
 ]
 
 [phases.build]
-cmds = ["python manage.py collectstatic --noinput"]
+# We use the full path to the virtual environment's Python
+cmds = ["/app/.venv/bin/python manage.py collectstatic --noinput"]
