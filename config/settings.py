@@ -84,24 +84,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database — use DATABASE_URL from Railway if available, else fall back to local
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL)
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'aaron_billing_db',
-            'USER': 'postgres',
-            'PASSWORD': 'p@ssw0rd',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
-    }
+# Database — use DATABASE_URL from Railway if available, else fall back to SQLite for local dev
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
 
 
 # Password validation
